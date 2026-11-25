@@ -58,16 +58,20 @@ domain:
 
 screening:
   enabled: true
-  # BROAD question: is the record genuinely about ticks? (climate is a later theme flag)
-  question: "Is this record primarily about ticks (Acari: Ixodida) or tick-borne diseases?"
+  # TICK-FOCUSED question (decided 2026-11-25; see docs/decisions.md)
+  question: "Did this study use, examine or measure ticks or tick-derived material?"
   criteria: |
-    INCLUDE if the study is about ticks or tick-borne pathogens or diseases in humans or
-    animals: biology, ecology, taxonomy, pathogens, surveillance, clinical or veterinary
-    disease, control, vaccines, modelling, climate, or socio-economic aspects.
-    EXCLUDE other meanings of "tick" (tick box, tick size in finance, clock tick, tick-tock),
-    other arthropods without ticks, and records that only mention ticks in passing.
+    INCLUDE (tick-focused): ticks studied directly (biology, taxonomy, ecology, genomics, microbiome);
+    tick body parts or tick-derived material (saliva, salivary proteins, genes, cell lines, anti-tick
+    vaccines such as Bm86); pathogens detected in field-collected ticks; ticks collected or counted on
+    hosts; acaricides, repellents or biocontrol tested on ticks; clinical tick-bite cases where the tick
+    was identified; distribution or climate models built from tick records. Reviews of tick biology or
+    control: include and flag as review.
+    EXCLUDE (keep as a flagged disease_only layer): patients, serosurveys, outbreak reports, pathogen
+    vaccines in hosts, pathogen work in culture or animal models with no tick, alpha-gal clinical
+    studies with no tick material. Also exclude other meanings of "tick" and mites without ticks.
     If unsure, mark "uncertain".
-  reason_codes: ["INCLUDE","EXCLUDE_NOT_TICKS","EXCLUDE_PASSING_MENTION","EXCLUDE_WRONG_TYPE","UNCERTAIN"]
+  reason_codes: ["INCLUDE","INCLUDE_REVIEW","EXCLUDE_DISEASE_ONLY","EXCLUDE_NOT_TICKS","EXCLUDE_WRONG_TYPE","UNCERTAIN"]
   consensus_rule: "majority"
   uncertain_to_human: true
   disagreement_to_human: true

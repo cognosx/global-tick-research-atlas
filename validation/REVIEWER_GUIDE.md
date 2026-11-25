@@ -11,20 +11,29 @@ You do **not** see what the computer decided. Please do not discuss records with
 
 | Column | Question | Values |
 | --- | --- | --- |
-| `Q1_about_ticks` | Is this record mainly about ticks or tick-borne pathogens or diseases? | include / exclude / unsure |
+| `Q1_tick_focused` | Did the study use, examine or measure ticks or tick-derived material? | include / exclude / unsure |
 | `Q2_climate_effect` | Does it assess an effect of climate, weather or season on ticks or tick-borne disease? | yes / no / unsure |
 | `confidence` | How sure are you about Q1? | high / medium / low |
 | `note` | Anything useful (short) | free text |
 
 ## Rules for Q1
 
-**Include** if ticks or tick-borne pathogens/diseases are a main subject. Examples: tick biology, ecology, taxonomy, surveillance, pathogens (Babesia, Theileria, Anaplasma, Ehrlichia, Rickettsia, Borrelia, CCHF virus, TBE virus…), clinical or veterinary disease, acaricides, vaccines, modelling, economics.
+**Include** when ticks or tick material are a subject of the study:
+- ticks studied directly: biology, taxonomy, ecology, genomics, microbiome, field collection
+- tick body parts or tick-derived material: saliva, salivary proteins, genes, tick cell lines, anti-tick vaccines (e.g. Bm86)
+- pathogens detected **in** ticks collected in the field (the tick is the sample)
+- ticks collected or counted on hosts (tick burden on cattle, dogs, wildlife)
+- acaricides, repellents or biocontrol tested **on** ticks
+- a clinical tick-bite case where the tick was identified
+- distribution or climate models built from tick records
+- reviews of tick biology or control (write "review" in `note`)
 
-**Exclude** if:
-- "tick" has another meaning (tick box, tick size in finance, clock tick, tick-tock)
-- the main subject is another arthropod (mites, fleas, mosquitoes) and ticks are not studied
-- ticks are only mentioned in passing (one sentence in a long list)
-- it is not a research record (erratum, front matter, index)
+**Exclude** when no tick or tick material was studied:
+- patients, serosurveys, outbreak reports, diagnostics in humans or animals
+- pathogen vaccines tested in hosts; pathogen work in culture or animal models with no tick
+- alpha-gal clinical studies with no tick material
+- other meanings of "tick" (tick box, tick size, clock tick); mites or other arthropods without ticks
+- non-research records (erratum, front matter, index)
 
 **Unsure** if the title and abstract are not enough. Do not search for the full text; we resolve these later.
 

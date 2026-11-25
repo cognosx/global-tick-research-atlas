@@ -8,7 +8,7 @@ Earlier screening metrics (precision 0.993, recall 0.985) compared the LLMs with
 - **Quotas:** 200 per bloc, so Africa gets equal attention; 20% of each bloc from disagreements
 - **Weights:** each record carries `stratum population / stratum sample`, so results generalize to the whole corpus
 - **Blind:** reviewers see title, abstract, year, venue, language, DOI only, each in a different order
-- **Two questions:** Q1 tick relevance (broad corpus) and Q2 climate effect (validates the climate flag)
+- **Two questions:** Q1 tick-focused (ticks or tick material studied) and Q2 climate effect (validates the climate flag)
 - **Metrics:** Cohen's kappa between reviewers; weighted sensitivity, specificity, precision and F1 per screener with 95% bootstrap CIs, overall and per bloc
 
 ## Steps

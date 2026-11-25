@@ -149,14 +149,14 @@ def main():
     blind = pd.DataFrame({
         "review_id": samp["review_id"], "title": g("title"), "abstract": g("abstract"),
         "year": g("year"), "venue": g("venue"), "language": g("language"), "doi": g("doi"),
-        "Q1_about_ticks": "", "Q2_climate_effect": "", "confidence": "", "note": "",
+        "Q1_tick_focused": "", "Q2_climate_effect": "", "confidence": "", "note": "",
     })
     for r, seed in (("A", 1), ("B", 2)):  # each reviewer sees a different order
         sheet = blind.sample(frac=1, random_state=SEED + seed)
         path = os.path.join(a.out, f"reviewer_{r}.xlsx")
         with pd.ExcelWriter(path) as xw:
             sheet.to_excel(xw, index=False, sheet_name="review")
-            pd.DataFrame({"field": ["Q1_about_ticks", "Q2_climate_effect", "confidence"],
+            pd.DataFrame({"field": ["Q1_tick_focused", "Q2_climate_effect", "confidence"],
                           "allowed values": ["include / exclude / unsure",
                                              "yes / no / unsure",
                                              "high / medium / low"]}

@@ -72,20 +72,20 @@ def main():
     key = pd.read_csv(os.path.join(a.dir, "sample_key.csv"))
     ra = pd.read_excel(os.path.join(a.dir, "reviewer_A.xlsx"), sheet_name="review")
     rb = pd.read_excel(os.path.join(a.dir, "reviewer_B.xlsx"), sheet_name="review")
-    df = key.merge(ra[["review_id", "Q1_about_ticks", "Q2_climate_effect"]], on="review_id") \
-            .merge(rb[["review_id", "Q1_about_ticks", "Q2_climate_effect"]], on="review_id",
+    df = key.merge(ra[["review_id", "Q1_tick_focused", "Q2_climate_effect"]], on="review_id") \
+            .merge(rb[["review_id", "Q1_tick_focused", "Q2_climate_effect"]], on="review_id",
                    suffixes=("_A", "_B"))
 
     out = []
-    for q in ("Q1_about_ticks", "Q2_climate_effect"):
+    for q in ("Q1_tick_focused", "Q2_climate_effect"):
         k, po, n = kappa(norm(df[f"{q}_A"]), norm(df[f"{q}_B"]))
         out.append(f"{q}: kappa={k:.3f} agreement={po:.3f} (n={n})")
     print("\n".join(out))
 
-    a1, b1 = norm(df["Q1_about_ticks_A"]), norm(df["Q1_about_ticks_B"])
+    a1, b1 = norm(df["Q1_tick_focused_A"]), norm(df["Q1_tick_focused_B"])
     df["reference"] = np.where(a1 == b1, a1, np.nan)
     adj_path = os.path.join(a.dir, "adjudication.csv")
-    todo = df[df["reference"].isna()][["review_id", "Q1_about_ticks_A", "Q1_about_ticks_B"]]
+    todo = df[df["reference"].isna()][["review_id", "Q1_tick_focused_A", "Q1_tick_focused_B"]]
     if os.path.exists(adj_path):
         adj = pd.read_csv(adj_path)
         adj["adj"] = norm(adj["adjudicated"])
