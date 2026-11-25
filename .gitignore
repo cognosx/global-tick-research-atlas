@@ -26,3 +26,7 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# validation samples contain titles/abstracts and verdicts: keep in Drive
+validation/*.xlsx
+validation/*.csv
