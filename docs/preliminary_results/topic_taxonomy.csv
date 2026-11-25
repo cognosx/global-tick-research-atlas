@@ -1,0 +1,47 @@
+topic_id,count,bertopic_name,clean_label,theme_group,keep_or_drop,ssa_odds_ratio,ssa_direction,ssa_significant
+0,24309,rickettsia_borrelia_disease_ixodes,Multi-pathogen surveillance & diversity,Pathogen surveillance,keep,1.047,over,False
+1,6548,babesia_dogs_babesiosis_canis,"Babesiosis / piroplasms (Babesia, Theileria)",Piroplasmoses,keep,1.373,over,True
+2,5396,resistance_microplus_rhipicephalus_acaricidal,Acaricide resistance & chemical control,Acaricides & vector control,keep,1.627,over,True
+4,4500,salivary_proteins_protein_expression,Tick salivary proteins & anti-tick vaccines,Tick biology (molecular/-omics),keep,0.613,under,True
+3,4001,students_practice_book_box,[NON-TICK] 'tick box' — surveys/education,NON-TICK NOISE,DROP,0.547,under,True
+9,2239,burgdorferi_borrelia_lyme,Borrelia burgdorferi / Lyme (basic biology),Borrelia / Lyme borreliosis,keep,0.106,under,True
+5,2225,market_price_trading_stock,[NON-TICK] 'tick size' — finance/markets,NON-TICK NOISE,DROP,0.107,under,True
+6,2177,cchf_cchfv_crimean_congo,Crimean-Congo haemorrhagic fever (CCHF),Tick-borne viruses,keep,1.689,over,True
+7,2114,en_para_se_que,Portuguese/Spanish-language tick papers,Non-English clusters (retain),keep,0.315,under,True
+17,2072,lyme_disease_patients_neuroborreliosis,Lyme disease — clinical / neuroborreliosis,Borrelia / Lyme borreliosis,keep,0.189,under,True
+20,1639,flavivirus_encephalitis_tbev,Tick-borne encephalitis / flaviviruses,Tick-borne viruses,keep,0.305,under,True
+29,1463,lyme_disease_incidence_surveillance,Lyme disease — incidence & surveillance,Borrelia / Lyme borreliosis,keep,0.376,under,True
+12,1409,climate_change_disease_vector_borne,Climate change & vector-borne disease,Modelling & climate,keep,1.152,over,False
+21,1281,tick_tock_robot_game,[NON-TICK] 'tick-tock' clocks/robots/games,NON-TICK NOISE,DROP,0.433,under,True
+8,1239,quantum_framework_readout_certified,[NON-TICK] quantum physics,NON-TICK NOISE,DROP,0.546,under,False
+27,1236,mitochondrial_phylogenetic_sequences,Tick phylogenetics & genomics,Tick biology (molecular/-omics),keep,1.75,over,True
+14,1229,bacterial_microbiome_bacteria_pathogens,Tick microbiome & microbiota,Tick biology (molecular/-omics),keep,1.199,over,False
+43,1221,birds_abundance_larvae_nymphs,"Host ecology, abundance, larvae/nymphs",Ecology & host associations,keep,0.899,under,False
+18,1195,cattle_farmers_livestock_dairy,"Cattle, livestock & dairy systems",Livestock & veterinary,keep,13.323,over,True
+22,1081,ixodes_ixodidae_ricinus_acari,Ixodid systematics (Ixodes/Ixodidae),Systematics & taxonomy,keep,0.797,under,False
+10,1053,sftsv_sfts_fever_thrombocytopenia,SFTS virus (severe fever thrombocytopenia),Tick-borne viruses,keep,0.238,under,True
+11,841,anisopliae_metarhizium_bassiana_fungi,Entomopathogenic fungi (biocontrol),Acaricides & vector control,keep,0.924,under,False
+13,829,clock_synchronization_hardware_network,[NON-TICK] clock/computer 'clock tick',NON-TICK NOISE,DROP,0.035,under,True
+25,693,ehrlichiosis_ehrlichia_chaffeensis,Ehrlichiosis (Ehrlichia chaffeensis),Bacterial/rickettsial diseases,keep,0.253,under,True
+34,678,paralysis_tick_paralysis_dogs,Tick paralysis (clinical/veterinary),Livestock & veterinary,keep,0.284,under,True
+23,659,code_rim_engraved_vessel,[NON-TICK] archaeology 'tick marks',NON-TICK NOISE,DROP,0.353,under,True
+16,645,gal_alpha_alpha_gal_ige,Alpha-gal syndrome (tick-induced meat allergy),Clinical presentations,keep,0.446,under,True
+15,614,burnetii_coxiella_q_fever,Q fever (Coxiella burnetii),Bacterial/rickettsial diseases,keep,1.545,over,True
+33,592,anaplasmosis_phagocytophilum_hga,Anaplasmosis (Anaplasma phagocytophilum),Bacterial/rickettsial diseases,keep,0.192,under,True
+41,569,arthropods_flies_arthropod_insects,Other arthropod vectors (context),Ecology & host associations,keep,1.31,over,False
+30,552,mites_mite_acari_spiders,Mites & Acari relatives,Systematics & taxonomy,keep,0.798,under,False
+19,544,tularensis_tularemia_francisella,Tularaemia (Francisella tularensis),Bacterial/rickettsial diseases,keep,0.135,under,True
+35,508,amp_ve_dan_invisible,[NON-TICK] garbage/OCR tokens,NON-TICK NOISE,DROP,0.151,under,True
+31,483,bartonella_cats_henselae,"Bartonellosis (Bartonella, cats/fleas)",Bacterial/rickettsial diseases,keep,0.588,under,True
+40,469,disease_mathematical_tick_population_dynamics,Tick population dynamics & modelling,Modelling & climate,keep,1.689,over,True
+24,437,camels_camel_dromedarii_hyalomma,Camels & Hyalomma (arid/pastoral systems),Livestock & veterinary,keep,3.003,over,True
+38,428,clock_circadian_clocks_aging,[NON-TICK] circadian 'clock' biology,NON-TICK NOISE,DROP,0.115,under,True
+42,419,powv_powassan_encephalitis,Powassan virus,Tick-borne viruses,keep,0.234,under,True
+44,389,patient_pain_diagnosis,General clinical presentations,Clinical presentations,keep,0.546,under,False
+32,372,ruminantium_heartwater_ehrlichia,Heartwater (Ehrlichia ruminantium) — African,Livestock & veterinary,keep,12.792,over,True
+26,362,tbe_encephalitis_russian,Tick-borne encephalitis (Russian-language),Non-English clusters (retain),keep,1.093,over,False
+28,361,asfv_swine_asf_swine_fever,African swine fever (tick-vectored),Tick-borne viruses,keep,4.928,over,True
+36,283,lyme_carditis_block,Lyme carditis (cardiac Lyme),Borrelia / Lyme borreliosis,keep,0.262,under,True
+39,276,rickettsia_portuguese_febre_maculosa,Portuguese rickettsiosis (febre maculosa),Non-English clusters (retain),keep,0.177,under,True
+37,270,tick_russian_ixodovykh,Russian-language tick papers,Non-English clusters (retain),keep,0.106,under,False
+45,214,kfd_kyasanur_forest_disease,Kyasanur Forest Disease (KFD),Tick-borne viruses,keep,0.575,under,False

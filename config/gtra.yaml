@@ -1,44 +1,95 @@
-# GTRA project configuration (read by the sosci-pipeline engine)
+# GTRA — Global Tick Research Atlas (broad corpus: ALL tick research, no climate limit)
+# Format: sosci-pipeline engine config (see config/project.example.yaml).
+# The earlier climate-only config is kept as config/legacy_ticks_climate_ssa.yaml.
 project:
-  name: global-tick-research-atlas
-  version: 0.1.0
-  cutoff_date: 2025-12-31        # v1.0 freeze; 2026 is a partial year
-  contact_email: cognosxx@gmail.com
+  name: "global_tick_research_atlas"
+  description: "Global map of research on ticks and tick-borne diseases, 2000-2025"
+  contact_email: "cognosxx@gmail.com"   # used for API polite pools (OpenAlex, Crossref, Unpaywall)
 
 paths:
-  base_dir: .
-  data_subdir: data
-  work_subdir: data/processed
+  base_dir: "/content/drive/MyDrive/ticks"   # set to your own path
+  data_subdir: "data"
+  work_subdir: "gtra_v1"
 
-sources:                          # broad corpus: all tick research, no climate limit
-  - openalex
-  - pubmed
-  - europepmc
-  - web_of_science                # licensed: IDs only in releases
-  - dimensions                    # licensed: IDs only in releases
-  - lens                          # licensed: IDs only in releases
-  - global_index_medicus
-  - ajol                          # coverage for African journals (to add)
-  - scielo                        # coverage for Latin America (to add)
+io:
+  format: "parquet"
+  also_write_xlsx: false
+  xlsx_max_rows: 200000
 
-clean:
-  fix_encoding: true              # ftfy before any text processing
+sources:
+  - {label: "PubMed",               aliases: ["pubmed","medline","ncbi"]}
+  - {label: "Europe PMC",           aliases: ["europepmc","epmc","europe pmc"]}
+  - {label: "OpenAlex",             aliases: ["openalex"]}
+  - {label: "Lens.org",             aliases: ["lens","lens.org"]}
+  - {label: "Scopus",               aliases: ["scopus"]}
+  - {label: "Web of Science",       aliases: ["wos","web of science","woscc"]}
+  - {label: "Dimensions",           aliases: ["dimensions"]}
+  - {label: "Global Index Medicus", aliases: ["gim","global index medicus"]}
+  # to add for coverage: AJOL (African journals), SciELO (Latin America)
+
+ingest: {dedupe_within_source: true, prune_low_coverage_below: 0.15}
+type_filter: {keep_case_reports: true}
+year_filter: {min_year: 2000, keep_missing_year: true}
+
+enrich:
+  use_openalex: true
+  use_crossref: true
+  use_unpaywall: true
+  use_europepmc: true
+  use_semantic_scholar: false
+  title_fallback: true
+  title_min_score: 92
+  checkpoint_every: 500
+  chunk_size: 25000
+  workers: 8
 
 dedupe:
   fuzzy_threshold: 90
   fuzzy_year_tolerance: 2
-  author_fp_mode: last_initial
+  author_fp_mode: "last_initial"
+  merge_versions_sharing_oaid: true
+
+domain:
+  focus_region_name: "Sub-Saharan Africa"
+  focus_countries: ["NG","KE","GH","TZ","ET","UG","ZA","CM","SN","CI","ML","BF","ZM","ZW",
+    "MZ","AO","RW","BJ","BW","NA","MW","SD","CD","GA","TD","NE","SO","MG","SL","TG","GN",
+    "ER","BI","LS","SZ","GM","LR","MR"]
+  # Maghreb is analysed as a separate bloc (DZ, MA, TN, LY, EG) — see docs/decisions.md
 
 screening:
+  enabled: true
+  # BROAD question: is the record genuinely about ticks? (climate is a later theme flag)
   question: "Is this record primarily about ticks (Acari: Ixodida) or tick-borne diseases?"
-  consensus_rule: majority
+  criteria: |
+    INCLUDE if the study is about ticks or tick-borne pathogens or diseases in humans or
+    animals: biology, ecology, taxonomy, pathogens, surveillance, clinical or veterinary
+    disease, control, vaccines, modelling, climate, or socio-economic aspects.
+    EXCLUDE other meanings of "tick" (tick box, tick size in finance, clock tick, tick-tock),
+    other arthropods without ticks, and records that only mention ticks in passing.
+    If unsure, mark "uncertain".
+  reason_codes: ["INCLUDE","EXCLUDE_NOT_TICKS","EXCLUDE_PASSING_MENTION","EXCLUDE_WRONG_TYPE","UNCERTAIN"]
+  consensus_rule: "majority"
   uncertain_to_human: true
   disagreement_to_human: true
+  models:
+    - {provider: "openai",    model: "gpt-4o-mini"}
+    - {provider: "anthropic", model: "claude-sonnet-4-6"}
+    - {provider: "google",    model: "gemini-2.5-flash"}
   checkpoint_every: 100
 
-validation:
-  sample_size: 600                # blind, stratified by region, topic, language, verdict
-  reviewers: 2
+# blind, stratified (region, topic, language, verdict), two reviewers, kappa + 95% CI
+validation: {sample_size: 600, target_sensitivity: 0.95}
 
-themes:
-  climate_flag: theme_climate     # the old climate corpus (A) becomes a flag
+topic_model:
+  only_tick_relevant: true
+  embed_model: "paraphrase-multilingual-mpnet-base-v2"
+  min_topic_size: 150
+  reduce_outliers: true
+
+analysis:
+  max_year: 2025                    # v1.0 cut-off; 2026 is a partial year
+  topic_taxonomy_csv: "topic_taxonomy.csv"   # copy from data/lookups/
+  noise_topic_ids: [3, 5, 8, 13, 21, 23, 35, 38]
+
+layer3:
+  min_n_per_year: 20

@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sosci-pipeline"
+version = "2.3.0"
+description = "Reusable science-of-science / meta-research preprocessing and bibliometric analysis pipeline"
+requires-python = ">=3.9"
+dependencies = [
+    "pandas>=2.0",
+    "pyarrow>=14.0",
+    "pyyaml>=6.0",
+    "rapidfuzz>=3.0",
+    "requests>=2.28",
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "openpyxl>=3.1",
+]
+
+[project.optional-dependencies]
+llm = ["anthropic", "openai", "google-genai", "scikit-learn"]
+topics = ["bertopic", "sentence-transformers", "umap-learn", "hdbscan", "scikit-learn"]
+analysis = ["pycountry", "statsmodels", "pymannkendall", "scikit-learn"]
+all = ["sosci-pipeline[llm,topics,analysis]"]
+
+[project.scripts]
+sosci = "sosci_pipeline.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["sosci_pipeline*"]

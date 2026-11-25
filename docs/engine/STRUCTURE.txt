@@ -1,0 +1,55 @@
+sosci-pipeline/                     v2.3  (engine + per-project assets separated for reuse)
+├── README.md
+├── CHANGELOG.md
+├── STRUCTURE.txt
+├── pyproject.toml
+│
+├── sosci_pipeline/                 # ── THE REUSABLE ENGINE (generic, project-agnostic) ──
+│   ├── config.py                   # YAML -> Config
+│   ├── context.py                  # runtime paths/format shared by stages
+│   ├── io.py                       # data contract + parquet/csv/xlsx read+write
+│   ├── apiutil.py                  # HTTP + parallel_map (bounded thread pool)
+│   ├── dedupe.py                   # OpenAlex-ID-aware union-find dedup
+│   ├── enrich_chunked.py           # memory-safe, resumable, row-group-direct enrichment
+│   ├── reenrich_stragglers.py      # retry rate-limited records (alt email, idempotent)
+│   ├── stages.py                   # preprocessing run_<stage>(ctx)
+│   ├── analysis_stages.py          # tick_relevance, topic_model (MULTILINGUAL default),
+│   │                               #   finalize_corpus, translate, layers 1-3
+│   ├── screen.py                   # LLM screening + consensus + validation
+│   ├── provenance.py               # run log + PRISMA + build_flows (dual diagrams)
+│   ├── export.py                   # corpus_explore.xlsx + analysis_results.xlsx
+│   ├── runner.py                   # orchestrates OPTIMIZED_ORDER + ANALYSIS_ORDER
+│   └── cli.py                      # `sosci <stage>` entry point
+│
+├── configs/                        # ── PER-PROJECT configs ──
+│   ├── project.example.yaml        # copy this for a new project
+│   └── ticks_climate_ssa.yaml      # the tick study (multilingual + taxonomy wired)
+│
+├── projects/                       # ── PER-PROJECT assets (NOT engine code) ──
+│   └── ticks_climate_ssa/
+│       ├── README.md               # findings, stories, paper plan
+│       └── topic_taxonomy.csv      # 47 topics -> clean labels, theme groups, keep/DROP, SSA OR
+│
+├── notebooks/
+│   └── sosci_pipeline_runner.ipynb # Colab runner (multilingual, toggles, finalize, export)
+│
+├── reference_scripts/              # original standalone scripts (reference/fallback)
+│   ├── stages/                     # per-stage Colab scripts
+│   └── analysis/                   # standalone analysis + finalize/flows/multilingual/translate
+│
+├── docs/
+│   └── REUSE_GUIDE.md              # how to apply the pipeline to a new project
+│
+└── tests/
+    └── test_core.py
+
+PREPROCESSING ORDER:
+ type_filter -> year_filter -> dedupe_pass1 -> enrich -> fix_funders ->
+ dedupe_pass2 -> coverage -> type_audit -> reenrich -> readiness -> backfill
+ -> screen xN -> consensus -> validate -> prisma
+
+ANALYSIS ORDER (optional):
+ tick_relevance -> topic_model -> finalize_corpus -> layer1_burden ->
+ layer2_topic_region -> layer3_climate_niche
+
+UTILITY STAGES (any time): flows, translate, export

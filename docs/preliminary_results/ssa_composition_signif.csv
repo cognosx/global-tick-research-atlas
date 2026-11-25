@@ -1,0 +1,27 @@
+clean_label,theme_group,count,ssa_odds_ratio,ssa_direction
+"Cattle, livestock & dairy systems",Livestock & veterinary,1195,13.323,over
+Heartwater (Ehrlichia ruminantium) — African,Livestock & veterinary,372,12.792,over
+African swine fever (tick-vectored),Tick-borne viruses,361,4.928,over
+Camels & Hyalomma (arid/pastoral systems),Livestock & veterinary,437,3.003,over
+Tick phylogenetics & genomics,Tick biology (molecular/-omics),1236,1.75,over
+Tick population dynamics & modelling,Modelling & climate,469,1.689,over
+Crimean-Congo haemorrhagic fever (CCHF),Tick-borne viruses,2177,1.689,over
+Acaricide resistance & chemical control,Acaricides & vector control,5396,1.627,over
+Q fever (Coxiella burnetii),Bacterial/rickettsial diseases,614,1.545,over
+"Babesiosis / piroplasms (Babesia, Theileria)",Piroplasmoses,6548,1.373,over
+Tick salivary proteins & anti-tick vaccines,Tick biology (molecular/-omics),4500,0.613,under
+"Bartonellosis (Bartonella, cats/fleas)",Bacterial/rickettsial diseases,483,0.588,under
+Alpha-gal syndrome (tick-induced meat allergy),Clinical presentations,645,0.446,under
+Lyme disease — incidence & surveillance,Borrelia / Lyme borreliosis,1463,0.376,under
+Portuguese/Spanish-language tick papers,Non-English clusters (retain),2114,0.315,under
+Tick-borne encephalitis / flaviviruses,Tick-borne viruses,1639,0.305,under
+Tick paralysis (clinical/veterinary),Livestock & veterinary,678,0.284,under
+Lyme carditis (cardiac Lyme),Borrelia / Lyme borreliosis,283,0.262,under
+Ehrlichiosis (Ehrlichia chaffeensis),Bacterial/rickettsial diseases,693,0.253,under
+SFTS virus (severe fever thrombocytopenia),Tick-borne viruses,1053,0.238,under
+Powassan virus,Tick-borne viruses,419,0.234,under
+Anaplasmosis (Anaplasma phagocytophilum),Bacterial/rickettsial diseases,592,0.192,under
+Lyme disease — clinical / neuroborreliosis,Borrelia / Lyme borreliosis,2072,0.189,under
+Portuguese rickettsiosis (febre maculosa),Non-English clusters (retain),276,0.177,under
+Tularaemia (Francisella tularensis),Bacterial/rickettsial diseases,544,0.135,under
+Borrelia burgdorferi / Lyme (basic biology),Borrelia / Lyme borreliosis,2239,0.106,under

@@ -1,0 +1,64 @@
+# TEMPLATE — copy this for a new project, edit paths/sources/criteria.
+project:
+  name: "my_project"
+  description: "One-line description of the review/bibliometric study"
+  contact_email: "you@example.com"
+
+paths:
+  base_dir: "/path/to/your/project"
+  data_subdir: "data"
+  work_subdir: "preprocessing_data"
+
+io:
+  format: "parquet"
+  also_write_xlsx: false
+  xlsx_max_rows: 200000
+
+sources:
+  - {label: "PubMed", aliases: ["pubmed","medline"]}
+  - {label: "Scopus", aliases: ["scopus"]}
+
+ingest: {dedupe_within_source: true, prune_low_coverage_below: 0.15}
+type_filter: {keep_case_reports: false}
+year_filter: {min_year: 2000, keep_missing_year: true}
+
+enrich:
+  use_openalex: true
+  use_crossref: true
+  use_unpaywall: true
+  use_europepmc: true
+  title_fallback: true
+  title_min_score: 92
+  chunk_size: 25000
+  workers: 8
+
+dedupe:
+  fuzzy_threshold: 90
+  fuzzy_year_tolerance: 2
+  author_fp_mode: "last_initial"
+
+screening:
+  enabled: false
+  question: "Does this study meet your inclusion criterion?"
+  criteria: "Describe your strict inclusion/exclusion logic here."
+  reason_codes: ["INCLUDE","EXCLUDE","UNCERTAIN"]
+  consensus_rule: "any_include"
+  uncertain_to_human: true
+  disagreement_to_human: true
+  models:
+    - {provider: "openai", model: "gpt-4o-mini"}
+  checkpoint_every: 100
+
+validation: {sample_size: 250, target_sensitivity: 0.95}
+
+topic_model:
+  only_tick_relevant: false          # set true + supply a relevance filter for domain corpora
+  # multilingual by default so non-English papers cluster by theme, not language
+  embed_model: "paraphrase-multilingual-mpnet-base-v2"
+  min_topic_size: 100
+  reduce_outliers: true
+
+analysis:
+  max_year: 2026
+  topic_taxonomy_csv: null           # set to a per-project taxonomy CSV once topics are labelled
+  noise_topic_ids: []                # or list topic ids to drop as noise

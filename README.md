@@ -24,17 +24,30 @@ An open, deduplicated and enriched map of the world's research on ticks and tick
 ## Repository layout
 
 ```
-config/       project settings (sources, queries, thresholds)
-src/gtra/     project code (thin layer over the sosci-pipeline engine)
-pipeline/     one script per stage: 01_harvest ... 09_fulltext
-notebooks/    exploration only, numbered, no core logic
-data/sample/  small sample to run everything end to end
-data/lookups/ taxonomy, theme map, country blocs, noise topics
-validation/   blind validation sample, labels, agreement metrics
-papers/       one folder per paper: analysis, figures, tables
-docs/         data dictionary, decision log, methods, changelog
-explorer/     static web explorer
+config/                gtra.yaml (broad corpus), legacy climate config, example
+src/sosci_pipeline/    the engine: dedup, enrichment, LLM screening, topics, provenance
+pipeline/reference/    original per-stage Colab scripts (stages/ and analysis/)
+pipeline/fulltext/     tick_sections.py — multilingual section detection in full texts
+notebooks/             Colab runner, exploration only
+data/sample/           small sample to run everything end to end
+data/lookups/          topic_taxonomy.csv (46 topics, theme groups, noise topics, SSA odds ratios)
+validation/            blind validation sample, labels, agreement metrics
+papers/                one folder per paper: analysis, figures, tables
+docs/                  data dictionary, decision log, engine docs, preliminary results
+tests/                 engine tests (pytest)
+explorer/              static web explorer
 ```
+
+## Quick start
+
+```bash
+pip install -e ".[all]"      # or: pip install -e .  for the core only
+pytest tests                 # engine tests
+sosci --help                 # stage runner, reads config/gtra.yaml
+```
+
+In Colab, open `notebooks/00_sosci_pipeline_runner.ipynb` and set `base_dir` in `config/gtra.yaml`.
+API keys are read from environment variables or Colab secrets, never from files in this repository.
 
 ## Data
 
