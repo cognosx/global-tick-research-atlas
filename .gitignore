@@ -10,7 +10,8 @@ data/processed/
 *.parquet
 *.csv.gz
 *.jsonl
-!data/sample/*.parquet
+!data/**/*.parquet
+!data/**/*.csv
 !data/lookups/*
 
 # full texts (never shared)
