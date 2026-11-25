@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software or dataset, please cite it as below."
+title: "Global Tick Research Atlas (GTRA)"
+type: software
+authors:
+  - family-names: "Mbogning Fonkou"
+    given-names: "Maxime Descartes"
+    orcid: "https://orcid.org/0000-0001-5581-3891"
+    affiliation: "CognosX"
+repository-code: "https://github.com/cognosx/global-tick-research-atlas"
+license: MIT
+version: "0.1.0"
+date-released: "2026-11-25"
+keywords:
+  - ticks
+  - tick-borne diseases
+  - bibliometrics
+  - science of science
+  - research equity
+  - One Health

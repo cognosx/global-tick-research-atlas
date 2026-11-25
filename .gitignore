@@ -1,0 +1,28 @@
+# secrets
+.env
+*.key
+secrets/
+
+# large or licensed data (published on Zenodo instead)
+data/raw/
+data/interim/
+data/processed/
+*.parquet
+*.csv.gz
+*.jsonl
+!data/sample/*.parquet
+!data/lookups/*
+
+# full texts (never shared)
+fulltext/
+
+# python / notebooks
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db

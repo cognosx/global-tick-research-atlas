@@ -1,0 +1,44 @@
+# GTRA project configuration (read by the sosci-pipeline engine)
+project:
+  name: global-tick-research-atlas
+  version: 0.1.0
+  cutoff_date: 2025-12-31        # v1.0 freeze; 2026 is a partial year
+  contact_email: cognosxx@gmail.com
+
+paths:
+  base_dir: .
+  data_subdir: data
+  work_subdir: data/processed
+
+sources:                          # broad corpus: all tick research, no climate limit
+  - openalex
+  - pubmed
+  - europepmc
+  - web_of_science                # licensed: IDs only in releases
+  - dimensions                    # licensed: IDs only in releases
+  - lens                          # licensed: IDs only in releases
+  - global_index_medicus
+  - ajol                          # coverage for African journals (to add)
+  - scielo                        # coverage for Latin America (to add)
+
+clean:
+  fix_encoding: true              # ftfy before any text processing
+
+dedupe:
+  fuzzy_threshold: 90
+  fuzzy_year_tolerance: 2
+  author_fp_mode: last_initial
+
+screening:
+  question: "Is this record primarily about ticks (Acari: Ixodida) or tick-borne diseases?"
+  consensus_rule: majority
+  uncertain_to_human: true
+  disagreement_to_human: true
+  checkpoint_every: 100
+
+validation:
+  sample_size: 600                # blind, stratified by region, topic, language, verdict
+  reviewers: 2
+
+themes:
+  climate_flag: theme_climate     # the old climate corpus (A) becomes a flag
