@@ -33,7 +33,7 @@ data/sample/           small sample to run everything end to end
 data/lookups/          topic_taxonomy.csv (46 topics, theme groups, noise topics, SSA odds ratios)
 validation/            blind validation sample, labels, agreement metrics
 papers/                one folder per paper: analysis, figures, tables
-docs/                  data dictionary, decision log, engine docs, preliminary results
+docs/                  REPRODUCIBILITY.md (step-by-step build), data dictionary, decision log, engine docs
 tests/                 engine tests (pytest)
 explorer/              static web explorer
 ```
