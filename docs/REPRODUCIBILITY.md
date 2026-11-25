@@ -4,6 +4,8 @@ Reconstructed on 2026-11-25 from 42 Colab notebooks, the `sosci-pipeline` packag
 
 All notebooks ran in Google Colab with the laptop's Drive mounted at `/content/drive/Othercomputers/My laptop/D:/COGNOS X bon/ticks/` (here written `ticks/`). API keys came from Colab secrets: `OPENALEX_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`.
 
+> **Next harvest:** use `notebooks/01_corpus/01_OpenAlexHarvester_Ticks_v2.ipynb` with `src/gtra/openalex_harvester.py`: title + abstract + keywords search, the 2026 OpenAlex schema (`funders` + `awards` instead of the removed `grants`), raw JSONL kept, and `works` / `authorships` / `awards` tables.
+
 ## Two tracks, one shared start
 
 | Track | Question | Harvest | Working folder | Engine |
