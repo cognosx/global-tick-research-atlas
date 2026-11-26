@@ -18,3 +18,4 @@ Every threshold and scope choice, with date and reason. Newest first.
 - Preprint and published versions are linked (`version_group`), not merged. Counting analyses use `is_primary_version`.
 - Correction, erratum and retraction notices are never merged on title.
 - Every merge is logged in `merge_edges.parquet` with stage and score.
+- Fuzzy merges blocked for series/numbered titles and swapped tick species; preprint-server and repository DOIs do not block merges.

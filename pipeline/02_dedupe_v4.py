@@ -12,6 +12,8 @@
 # - Every merge is saved as an edge (pair, stage, score) in `merge_edges.parquet`, so you can audit or undo any merge.
 # - **Preprint ↔ published versions are linked, not merged** (`version_group`, `is_primary_version`).
 # - Correction / erratum / retraction notices are never merged on title.
+# - Fuzzy merges are blocked when titles differ by a number, a part numeral (Part I / Part II) or a swapped tick species.
+# - Preprint-server and repository DOIs (bioRxiv, Research Square, Zenodo, figshare…) are "soft": they do not block a merge with the journal DOI.
 # 
 # **Merge ladder:** 0 same OpenAlex ID → 1 same DOI → 1b same PMID → 2a title+authors+year → 2b title+journal(ISSN-L)+year → 3 title+year with a shared author → 4 fuzzy title (≥90, year ±1, shared author; or same journal at ≥95).
 

@@ -30,3 +30,20 @@ def test_ladder():
     assert s["W5"] != s["W1"] and s["W6"] != s["W1"]
     assert out["is_canonical"].sum() == 4
     assert out["is_primary_version"].sum() == 3
+
+
+def test_guards_and_soft_doi():
+    A = "Ticks of domestic animals in the Adamawa region of Cameroon part I"
+    B = "Ixodes ricinus infestation of roe deer in a forest of northern Germany"
+    df = pd.DataFrame([
+        dict(oa_id="P1", oa_doi="10.1/p1", oa_title=A, oa_authors="Ana Ngu", oa_year=2020, oa_journal="J", oa_type="article"),
+        dict(oa_id="P2", oa_doi="10.1/p2", oa_title=A.replace("part I", "part II"), oa_authors="Ana Ngu", oa_year=2020, oa_journal="J", oa_type="article"),
+        dict(oa_id="S1", oa_doi="", oa_title=B, oa_authors="Mo Rossi", oa_year=2018, oa_journal="J", oa_type="article"),
+        dict(oa_id="S2", oa_doi="", oa_title=B.replace("ricinus", "persulcatus"), oa_authors="Mo Rossi", oa_year=2018, oa_journal="J", oa_type="article"),
+        dict(oa_id="Z1", oa_doi="10.9/journal", oa_title=B + " revisited", oa_authors="Li Wei", oa_year=2021, oa_journal="J", oa_type="article"),
+        dict(oa_id="Z2", oa_doi="10.5281/zenodo.123", oa_title=B + " revisited", oa_authors="Li Wei", oa_year=2021, oa_journal="Zenodo", oa_type="article"),
+    ])
+    out = FastDeduper(verbose=False).run(df).set_index("oa_id")["study_id"]
+    assert out["P1"] != out["P2"]
+    assert out["S1"] != out["S2"]
+    assert out["Z1"] == out["Z2"]

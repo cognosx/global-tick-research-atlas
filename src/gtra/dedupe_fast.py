@@ -83,6 +83,44 @@ NOTICE_RE = re.compile(
     r"publisher s note|notice of retraction|withdrawn|addendum|correction to|reply|response to)\b")
 
 
+# DOIs of preprint servers and repositories. A paper can carry one of these AND a
+# journal DOI, so they must not block a merge ("soft" DOIs).
+PREPRINT_DOI = ("10.1101/", "10.21203/", "10.20944/", "10.2139/ssrn", "10.31219/osf",
+                "10.48550/", "10.22541/", "10.32942/", "10.31234/", "10.26434/", "10.36227/",
+                "10.1590/scielopreprints", "10.12688/f1000research")
+REPOSITORY_DOI = ("10.5281/zenodo", "10.6084/m9.figshare", "10.17632/", "10.5061/dryad")
+SOFT_DOI = PREPRINT_DOI + REPOSITORY_DOI
+
+# Series / taxon guard for fuzzy merges: "Part I" vs "Part II", "2019" vs "2020",
+# or "Ixodes ricinus" vs "Ixodes persulcatus" are different papers.
+ROMAN = {"i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii"}
+TICK_TAXA = {"ixodes", "amblyomma", "rhipicephalus", "boophilus", "dermacentor", "haemaphysalis",
+             "hyalomma", "ornithodoros", "argas", "otobius", "ricinus", "scapularis", "pacificus",
+             "persulcatus", "holocyclus", "hexagonus", "microplus", "annulatus", "decoloratus",
+             "sanguineus", "appendiculatus", "evertsi", "americanum", "maculatum", "cajennense",
+             "sculptum", "hebraeum", "variegatum", "variabilis", "andersoni", "reticulatus",
+             "marginatus", "silvarum", "nuttalli", "longicornis", "flava", "concinna", "punctata",
+             "inermis", "marginatum", "anatolicum", "asiaticum", "dromedarii", "excavatum",
+             "truncatum", "rufipes", "lusitanicum", "moubata", "erraticus", "persicus"}
+
+
+def series_conflict(t1: str, t2: str) -> bool:
+    """True when the titles differ by a number, a part/volume numeral, or a
+    SUBSTITUTED tick taxon (one species swapped for another). A dropped word or
+    an abbreviation ("I. ricinus" vs "Ixodes ricinus") is not a conflict."""
+    w1, w2 = t1.split(), t2.split()
+    a, b = set(w1), set(w2)
+    diff = a ^ b
+    if any(w.isdigit() for w in diff):
+        return True
+    def parts(ws):
+        return {ws[k + 1] for k in range(len(ws) - 1) if ws[k] in ("part", "partie", "parte", "teil")} \
+            | {w for w in ws if w in ROMAN and len(w) > 1}
+    if parts(w1) != parts(w2):
+        return True
+    return bool((a - b) & TICK_TAXA and (b - a) & TICK_TAXA)
+
+
 def _strip_acc(x: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFKD", x) if not unicodedata.combining(c))
 
@@ -153,7 +191,7 @@ class UnionFind:
     def __init__(self, n: int, dois: list[str]):
         self.p = np.arange(n)
         # cluster-level DOI sets; only roots hold entries
-        self.dois = {i: {d} for i, d in enumerate(dois) if d}
+        self.dois = {i: {d} for i, d in enumerate(dois) if d and not d.startswith(SOFT_DOI)}
 
     def find(self, x: int) -> int:
         p = self.p
@@ -211,7 +249,7 @@ class FastDeduper:
         df["_afp"] = g("oa_authors").map(author_fp)
         df["_jkey"] = [journal_key(j, i) for j, i in zip(g("oa_journal"), g("oa_issn_l"))]
         df["_type"] = g("oa_type").astype(str).str.lower().str.strip()
-        df["_is_preprint"] = df["_type"].eq("preprint")
+        df["_is_preprint"] = df["_type"].eq("preprint") | df["_doi"].str.startswith(PREPRINT_DOI)
         toks = df["_title"].map(content_tokens)
         df["_blk_first"] = toks.map(lambda t: t[0] if t else "")
         df["_blk_last"] = toks.map(lambda t: t[-1] if t else "")
@@ -310,6 +348,9 @@ class FastDeduper:
 
         def handle(i, j, sc):
             if abs(int(lens[i]) - int(lens[j])) > cfg.max_len_diff:
+                return
+            if sc < 100 and series_conflict(titles[i], titles[j]):
+                self.n_series_blocked = getattr(self, "n_series_blocked", 0) + 1
                 return
             version = pre[i] != pre[j]
             yi, yj = years[i], years[j]
@@ -432,6 +473,7 @@ class FastDeduper:
             "merges_by_stage": dict(sorted(self.stage_counts.items())),
             "largest_cluster": int(df["n_records"].max()),
             "version_links": len(self.version_edges),
+            "fuzzy_blocked_series_or_taxon": getattr(self, "n_series_blocked", 0),
             "studies_with_other_version": int(df.loc[df["is_canonical"], "has_other_version"].sum()),
             "primary_unique_studies": int(df["is_primary_version"].sum()),
             "timings_s": {k: round(v, 1) for k, v in self.timings.items()},
