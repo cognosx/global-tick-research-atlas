@@ -48,13 +48,13 @@ except ImportError:  # pragma: no cover
 # ---------------------------------------------------------------- config
 @dataclass
 class DedupeConfig:
-    fuzzy_threshold: int = 90          # title only, token_sort_ratio
+    fuzzy_threshold: int = 95          # title only, token_sort_ratio
     fuzzy_journal_threshold: int = 95  # stricter when only the journal confirms
-    fuzzy_year_tol: int = 1
+    fuzzy_year_tol: int = 2
     version_year_tol: int = 3          # preprint -> published gap allowed
     version_threshold: int = 92        # fuzzy score to link a preprint/VOR pair
     max_len_diff: int = 25
-    min_title_tokens: int = 3
+    min_title_tokens: int = 5
     min_title_chars: int = 15
     block_chunk: int = 2000            # rows per cdist chunk (memory cap)
     workers: int = -1                  # rapidfuzz cdist threads
