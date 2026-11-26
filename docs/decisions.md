@@ -19,3 +19,11 @@ Every threshold and scope choice, with date and reason. Newest first.
 - Correction, erratum and retraction notices are never merged on title.
 - Every merge is logged in `merge_edges.parquet` with stage and score.
 - Fuzzy merges blocked for series/numbered titles and swapped tick species; preprint-server and repository DOIs do not block merges.
+
+## 2026-11-25 · Screening design (gtra-screen-v1)
+- Engine reused from the GenAI facet-1 pipeline (κ 0.92 on 300 records): gpt-6-luna + deepseek-v4-flash, luna breaks ties, no adjudicator.
+- The model names the object of study (9 classes, from the old tick_classify taxonomy); inclusion and layer (core / review / disease_only / excluded / uncertain) are derived in code.
+- Rule flags (where the tick word sits, finance / plant / checkbox / mites / tic / archaeology noise) never exclude; they stratify the pilot and the audit.
+- Only primary versions are screened; preprint partners inherit the decision.
+- Gate before the full run: pilot of 300 hand-coded records, consensus sensitivity ≥ 0.95, class κ ≥ 0.80.
+- Open decision for the pilot: acaricide residue / toxicity studies with ticks as the declared target are coded tick_control (tick_examined = false).

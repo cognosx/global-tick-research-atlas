@@ -75,10 +75,11 @@ screening:
   consensus_rule: "majority"
   uncertain_to_human: true
   disagreement_to_human: true
+  # GTRA v1.0 uses src/gtra/screen_llm.py (prompt gtra-screen-v1): two models, luna breaks ties
   models:
-    - {provider: "openai",    model: "gpt-4o-mini"}
-    - {provider: "anthropic", model: "claude-sonnet-4-6"}
-    - {provider: "google",    model: "gemini-2.5-flash"}
+    - {provider: "openai",   model: "gpt-6-luna"}
+    - {provider: "deepseek", model: "deepseek-v4-flash"}
+  tiebreak: "gpt-6-luna"
   checkpoint_every: 100
 
 # blind, stratified (region, topic, language, verdict), two reviewers, kappa + 95% CI
