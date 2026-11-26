@@ -222,7 +222,25 @@ class OpenAlexHarvester:
         auths = w.get("authorships") or []
         awards = w.get("awards") or []
         funders = w.get("funders") or []
-        countries = [c for a in auths for c in (a.get("countries") or [])]
+        # per-author lists (same logic and names as the original harvester)
+        authors, orcids, corr = [], [], []
+        raw_affils, inst_names, inst_ids, inst_rors, inst_types, countries = [], [], [], [], [], []
+        for a in auths:
+            au = a.get("author") or {}
+            name = au.get("display_name") or ""
+            authors.append(name)
+            orcids.append(short_id(au.get("orcid")))              # index-aligned with oa_authors
+            if a.get("is_corresponding"):
+                corr.append(name)
+            raw_affils.extend(a.get("raw_affiliation_strings") or [])
+            for inst in (a.get("institutions") or []):
+                inst_names.append(inst.get("display_name") or "")
+                inst_ids.append(short_id(inst.get("id")))
+                inst_rors.append(short_id(inst.get("ror")))
+                inst_types.append(inst.get("type") or "")
+                if inst.get("country_code"):
+                    countries.append(inst["country_code"])
+            countries.extend(a.get("countries") or [])
         return {
             # identifiers
             "oa_id": short_id(w.get("id")), "oa_doi": short_id(w.get("doi") or ids.get("doi")),
@@ -237,15 +255,24 @@ class OpenAlexHarvester:
             "oa_created_date": w.get("created_date"), "oa_updated_date": w.get("updated_date"),
             # venue
             "oa_source_id": short_id(src.get("id")), "oa_journal": src.get("display_name"),
+            "oa_issn": src.get("issn_l") or (src.get("issn") or [None])[0],      # original column
             "oa_issn_l": src.get("issn_l"), "oa_issns": j(src.get("issn") or []),
             "oa_source_type": src.get("type"), "oa_publisher": src.get("host_organization_name"),
             "oa_source_in_doaj": src.get("is_in_doaj"), "oa_volume": bib.get("volume"),
             "oa_issue": bib.get("issue"), "oa_first_page": bib.get("first_page"),
             "oa_last_page": bib.get("last_page"), "oa_locations_count": w.get("locations_count"),
             "oa_indexed_in": j(w.get("indexed_in") or []),
-            # people and places (per-author detail is in authorships.parquet)
-            "oa_authors": self.sep.join((a.get("author") or {}).get("display_name") or "" for a in auths),
-            "oa_authors_count": len(auths),
+            # people (order and duplicates kept so lists stay aligned; detail in authorships.parquet)
+            "oa_authors": self.sep.join(authors),
+            "oa_author_orcids": self.sep.join(orcids),
+            "oa_corresponding_authors": j(corr),
+            "oa_authors_count": len(authors),
+            # affiliations and geography
+            "oa_affiliations_raw": j(raw_affils),
+            "oa_institutions": j(inst_names),
+            "oa_institution_ids": j(inst_ids),
+            "oa_institution_rors": j(inst_rors),
+            "oa_institution_types": j(inst_types),
             "oa_countries": j(countries),
             "oa_first_author_countries": j((auths[0].get("countries") or []) if auths else []),
             "oa_last_author_countries": j((auths[-1].get("countries") or []) if auths else []),
@@ -255,10 +282,13 @@ class OpenAlexHarvester:
             "oa_corresponding_institution_ids": j(short_id(x) for x in
                                                   (w.get("corresponding_institution_ids") or [])),
             # funding (new schema: funders + awards; `grants` no longer exists)
-            "oa_funder_ids": j(short_id(f.get("id")) for f in funders),
-            "oa_funders": j(f.get("display_name") for f in funders),
-            "oa_award_ids": j(short_id(a.get("id")) for a in awards),
-            "oa_funder_award_ids": j(a.get("funder_award_id") for a in awards),
+            # original names kept: oa_funders / oa_funder_ids / oa_award_ids (= the funder's award number)
+            "oa_funders": j([f.get("display_name") for f in funders] +
+                            [a.get("funder_display_name") for a in awards]),
+            "oa_funder_ids": j([short_id(f.get("id")) for f in funders] +
+                               [short_id(a.get("funder_id")) for a in awards]),
+            "oa_award_ids": j(a.get("funder_award_id") for a in awards),
+            "oa_openalex_award_ids": j(short_id(a.get("id")) for a in awards),   # new: G… ids
             "oa_n_awards": len(awards), "oa_has_funding": bool(funders or awards),
             # open access and content
             "oa_is_oa": oa.get("is_oa"), "oa_oa_status": oa.get("oa_status"), "oa_oa_url": oa.get("oa_url"),
