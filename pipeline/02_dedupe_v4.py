@@ -15,7 +15,7 @@
 # - Fuzzy merges are blocked when titles differ by a number, a part numeral (Part I / Part II) or a swapped tick species.
 # - Preprint-server and repository DOIs (bioRxiv, Research Square, Zenodo, figshare…) are "soft": they do not block a merge with the journal DOI.
 # 
-# **Merge ladder:** 0 same OpenAlex ID → 1 same DOI → 1b same PMID → 2a title+authors+year → 2b title+journal(ISSN-L)+year → 3 title+year with a shared author → 4 fuzzy title (≥90, year ±1, shared author; or same journal at ≥95).
+# **Merge ladder:** 0 same OpenAlex ID → 1 same DOI → 1b same PMID → 2a title+authors+year → 2b title+journal(ISSN-L)+year → 3 title+year with a shared author → 4 fuzzy title (≥95, year ±2, shared author; or same journal at ≥95).
 
 # 1 · Setup
 from google.colab import drive
@@ -40,9 +40,10 @@ IN_PATH = f"{ROOT}/data_raw/{RUN}/A_ticks/works.parquet"
 OUT_DIR = f"{ROOT}/preprocessing_data/{RUN}/dedupe"
 
 cfg = DedupeConfig(
-    fuzzy_threshold=90,          # title similarity (token_sort_ratio) with a shared author
+    fuzzy_threshold=95,          # title similarity (token_sort_ratio) with a shared author
     fuzzy_journal_threshold=95,  # stricter when only the journal confirms
-    fuzzy_year_tol=1,            # year gap allowed for a true duplicate
+    fuzzy_year_tol=2,            # year gap allowed for a true duplicate
+    min_title_tokens=5,          # shorter titles skip title-based matching
     version_year_tol=3,          # year gap allowed for preprint -> published
     version_threshold=92,        # title similarity to link versions
 )
