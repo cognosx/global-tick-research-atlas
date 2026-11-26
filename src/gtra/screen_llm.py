@@ -446,27 +446,65 @@ def cache_key(oa_id: str, provider: str, pv: str | None = None) -> str:
     return f"{short_id(oa_id)}|{provider}|{pv or PROMPT_VERSION}"
 
 
+BACKUP_SECONDS = 60      # copy new answers to Drive at least this often
+
+
+def _seg_dir() -> Path | None:
+    return Path(str(DRIVE_CACHE) + ".parts") if DRIVE_CACHE else None
+
+
 def restore_cache() -> dict[str, dict]:
-    import shutil
-    if DRIVE_CACHE and Path(DRIVE_CACHE).exists() and not Path(LOCAL_CACHE).exists():
-        shutil.copy(DRIVE_CACHE, LOCAL_CACHE)
-    cache = {}
+    """Rebuild the cache from Drive (old single file + incremental segments) and local disk.
+    A half-written last line (crash mid-write) is skipped."""
+    cache: dict[str, dict] = {}
+    files = []
+    if DRIVE_CACHE and Path(DRIVE_CACHE).exists():
+        files.append(Path(DRIVE_CACHE))
+    if _seg_dir() and _seg_dir().exists():
+        files += sorted(_seg_dir().glob("seg_*.jsonl"))
     if Path(LOCAL_CACHE).exists():
-        with open(LOCAL_CACHE, encoding="utf-8") as fh:
+        files.append(Path(LOCAL_CACHE))
+    for f in files:
+        with open(f, encoding="utf-8") as fh:
             for line in fh:
                 try:
                     d = json.loads(line)
                     cache[d["key"]] = d
                 except Exception:
                     pass
+    _BK["offset"] = Path(LOCAL_CACHE).stat().st_size if Path(LOCAL_CACHE).exists() else 0
+    print(f"[cache] {len(cache):,} answers restored", file=sys.stderr)
     return cache
 
 
-def backup_cache() -> None:
-    import shutil
-    if DRIVE_CACHE and Path(LOCAL_CACHE).exists():
-        Path(DRIVE_CACHE).parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(LOCAL_CACHE, DRIVE_CACHE)
+_BK = {"offset": 0, "t": 0.0}
+
+
+def backup_cache(force: bool = True) -> None:
+    """Write only the NEW local lines to a small segment file on Drive (no big re-copy)."""
+    if not DRIVE_CACHE or not Path(LOCAL_CACHE).exists():
+        return
+    if not force and time.time() - _BK["t"] < BACKUP_SECONDS:
+        return
+    with _WRITE:
+        size = Path(LOCAL_CACHE).stat().st_size
+        if size <= _BK["offset"]:
+            _BK["t"] = time.time()
+            return
+        with open(LOCAL_CACHE, "rb") as fh:
+            fh.seek(_BK["offset"])
+            chunk = fh.read(size - _BK["offset"])
+        cut = chunk.rfind(b"\n") + 1            # only complete lines
+        if cut == 0:
+            return
+        seg = _seg_dir()
+        seg.mkdir(parents=True, exist_ok=True)
+        name = seg / f"seg_{time.strftime('%Y%m%d_%H%M%S')}_{_BK['offset']:012d}.jsonl"
+        tmp = name.with_suffix(".tmp")
+        tmp.write_bytes(chunk[:cut])
+        tmp.rename(name)                         # a segment is either complete or absent
+        _BK["offset"] += cut
+        _BK["t"] = time.time()
 
 
 _WRITE = threading.Lock()
@@ -498,15 +536,14 @@ def _run_provider(records: list[dict], provider: str, cache: dict) -> None:
         _persist(rows)
         return rows
 
-    done = 0
-    with ThreadPoolExecutor(max_workers=WORKERS) as ex:
-        for fut in as_completed([ex.submit(job, b) for b in batches]):
-            for d in fut.result():
-                cache[d["key"]] = d
-            done += 1
-            if done % 10 == 0:
-                backup_cache()
-    backup_cache()
+    try:
+        with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+            for fut in as_completed([ex.submit(job, b) for b in batches]):
+                for d in fut.result():
+                    cache[d["key"]] = d
+                backup_cache(force=False)          # at most once a minute
+    finally:
+        backup_cache()                             # also on stop button / error
 
 
 # =========================================================================== #

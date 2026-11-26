@@ -64,3 +64,18 @@ def test_pilot_sheet(tmp_path):
     assert 30 <= len(s) <= 40 and s["_weight"].gt(0).all()
     p = G.write_pilot_sheet(s, tmp_path)
     assert pd.read_excel(p, sheet_name="coding").shape[0] == len(s)
+
+
+def test_resume_after_lost_runtime(tmp_path):
+    G._COMPLETE = fake
+    G.LOCAL_CACHE = str(tmp_path / "local.jsonl")
+    G.DRIVE_CACHE = str(tmp_path / "drive" / "cache.jsonl")
+    G.screen(G.prepare(RECS))
+    os.remove(G.LOCAL_CACHE)                       # Colab runtime lost: local disk gone
+    calls = []
+    G._COMPLETE = lambda *a: calls.append(1) or "[]"
+    c = G.restore_cache()
+    assert len(c) == 8                             # 4 records x 2 models, from Drive segments
+    G.screen(G.prepare(RECS), cache=c)
+    assert not calls
+    G._COMPLETE, G.DRIVE_CACHE = None, None
