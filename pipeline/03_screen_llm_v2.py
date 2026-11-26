@@ -45,6 +45,8 @@ G.PROVIDERS["gpt_6_luna"]["model"] = "gpt-6-luna"
 G.PROVIDERS["deepseek"]["model"]   = "deepseek-v4-flash"
 G.PRIMARY, G.TIEBREAK = ["gpt_6_luna", "deepseek"], "gpt_6_luna"
 G.DRIVE_CACHE = str(OUT / "gtra_screen_cache.jsonl")
+G.LOCAL_CACHE = "/content/gtra_screen_cache.jsonl"
+G.BACKUP_SECONDS = 30      # new answers are copied to Drive at least every 30 s (and on stop/error)
 print("prompt", G.PROMPT_VERSION, "| primary", G.PRIMARY, "| tiebreak", G.TIEBREAK)
 G.check_providers()
 
@@ -127,20 +129,39 @@ print(f"{todo} calls in {sec:.0f}s -> {per:.2f}s each | remaining {left:,} -> ~{
 r["gtra_layer"].value_counts()
 
 # ## 10 · Full run in resumable chunks
-# Each chunk is saved to `parts/` as soon as it finishes. **If Colab disconnects: re-run cells 1, 2, 3, 8 and this one.** The run stops by itself if a model answers fewer than half of a chunk (wrong id, key or quota).
+# **How progress is saved**
+# - every batch of 6 records → the Colab disk (`/content/gtra_screen_cache.jsonl`)
+# - every `G.BACKUP_SECONDS` (30 s) → only the new answers go to Drive as a small segment file in `screening/gtra_screen_cache.jsonl.parts/` (a segment is complete or absent, never half-written)
+# - when you press **Stop** or an error happens → one last copy to Drive (`finally`)
+# - every finished chunk of 3,000 → `parts/part_XXXX.parquet`
+# 
+# **If Colab disconnects:** re-run cells 1, 2, 3, 8 and this one. Answers already on Drive are reused, not paid twice. A hard disconnect can lose at most the last ~30 s. The run stops by itself if a model answers fewer than half of a chunk (wrong id, key or quota). Never run this cell in two tabs at once.
 
 CHUNK = 3000
 parts = RUN_DIR / "parts"
 chunks = [frozen.iloc[i:i + CHUNK] for i in range(0, len(frozen), CHUNK)]
 cache = G.restore_cache(); t_all = time.time()
-for k, ch in enumerate(chunks):
-    f = parts / f"part_{k:04d}.parquet"
-    if f.exists(): continue
-    t0 = time.time(); res = G.screen(ch, cache=cache); res.to_parquet(f, index=False); G.backup_cache()
-    print(f"[{len(list(parts.glob('part_*')))}/{len(chunks)}] {len(ch):,} in {(time.time()-t0)/60:.1f} min | "
-          f"agree {res['gtra_models_agree'].mean():.1%} | include {res['gtra_include'].mean():.1%} | "
-          f"elapsed {(time.time()-t_all)/3600:.2f} h")
+try:
+    for k, ch in enumerate(chunks):
+        f = parts / f"part_{k:04d}.parquet"
+        if f.exists(): continue
+        t0 = time.time(); res = G.screen(ch, cache=cache); res.to_parquet(f, index=False)
+        print(f"[{len(list(parts.glob('part_*')))}/{len(chunks)}] {len(ch):,} in {(time.time()-t0)/60:.1f} min | "
+              f"agree {res['gtra_models_agree'].mean():.1%} | include {res['gtra_include'].mean():.1%} | "
+              f"elapsed {(time.time()-t_all)/3600:.2f} h")
+finally:
+    G.backup_cache()                                   # Stop button, error or end: flush to Drive
+    G.cache_status(len(frozen))
 print("all done" if len(list(parts.glob("part_*"))) == len(chunks) else "NOT finished -- re-run this cell")
+
+# 10b · Save now + check the cache (any time; safe while cell 10 is stopped)
+G.backup_cache()
+st = G.cache_status(len(frozen))
+assert st["broken"] <= 1 and not st["gaps"], "cache problem: look at the gaps above"
+
+# 10c · OPTIONAL, end of a session only (cell 10 NOT running): merge the many small
+# segment files into one main cache file so the next restore is fast
+# G.compact_cache()
 
 # 11 · Assemble: screened works + preprint partners inherit their published version's decision
 codes = pd.concat([pd.read_parquet(p) for p in sorted(parts.glob("part_*.parquet"))]).drop_duplicates("oa_id", keep="last")

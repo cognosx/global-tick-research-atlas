@@ -79,3 +79,29 @@ def test_resume_after_lost_runtime(tmp_path):
     G.screen(G.prepare(RECS), cache=c)
     assert not calls
     G._COMPLETE, G.DRIVE_CACHE = None, None
+
+
+def test_status_and_compact(tmp_path):
+    G._COMPLETE = fake
+    G.LOCAL_CACHE = str(tmp_path / "local.jsonl")
+    G.DRIVE_CACHE = str(tmp_path / "drive" / "cache.jsonl")
+    G.screen(G.prepare(RECS))
+    st = G.cache_status(4)
+    assert st["per_model"] == {"gpt_6_luna": 4, "deepseek": 4} and not st["gaps"] and st["broken"] == 0
+    G.compact_cache()
+    assert G.cache_status(4)["segments"] == 0
+    os.remove(G.LOCAL_CACHE)
+    assert len(G.restore_cache()) == 8
+    G._COMPLETE, G.DRIVE_CACHE = None, None
+
+
+def test_restart_session_recovers_unsaved(tmp_path):
+    G._COMPLETE = fake
+    G.LOCAL_CACHE = str(tmp_path / "local.jsonl")
+    G.DRIVE_CACHE = None                            # answers only on the local disk
+    G.screen(G.prepare(RECS))
+    G.DRIVE_CACHE = str(tmp_path / "drive" / "cache.jsonl")
+    G.restore_cache()                               # restart session: pushes them to Drive
+    os.remove(G.LOCAL_CACHE)                        # then the runtime is lost
+    assert len(G.restore_cache()) == 8
+    G._COMPLETE, G.DRIVE_CACHE = None, None

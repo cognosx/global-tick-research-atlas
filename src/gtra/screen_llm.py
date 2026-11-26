@@ -464,15 +464,29 @@ def restore_cache() -> dict[str, dict]:
         files += sorted(_seg_dir().glob("seg_*.jsonl"))
     if Path(LOCAL_CACHE).exists():
         files.append(Path(LOCAL_CACHE))
+    on_drive: set[str] = set()
     for f in files:
+        is_local = f == Path(LOCAL_CACHE)
         with open(f, encoding="utf-8") as fh:
             for line in fh:
                 try:
                     d = json.loads(line)
                     cache[d["key"]] = d
+                    if not is_local:
+                        on_drive.add(d["key"])
                 except Exception:
                     pass
     _BK["offset"] = Path(LOCAL_CACHE).stat().st_size if Path(LOCAL_CACHE).exists() else 0
+    # answers that reached the local disk but not Drive (e.g. "Restart session"): push them now
+    missing = [d for k, d in cache.items() if k not in on_drive]
+    if DRIVE_CACHE and missing:
+        seg = _seg_dir()
+        seg.mkdir(parents=True, exist_ok=True)
+        name = seg / f"seg_{time.strftime('%Y%m%d_%H%M%S')}_recovered_{len(missing):08d}.jsonl"
+        tmp = name.with_suffix(".tmp")
+        tmp.write_text("".join(json.dumps(d, ensure_ascii=False) + "\n" for d in missing), encoding="utf-8")
+        tmp.rename(name)
+        print(f"[cache] {len(missing):,} local answers were not on Drive yet -> saved", file=sys.stderr)
     print(f"[cache] {len(cache):,} answers restored", file=sys.stderr)
     return cache
 
@@ -505,6 +519,69 @@ def backup_cache(force: bool = True) -> None:
         tmp.rename(name)                         # a segment is either complete or absent
         _BK["offset"] += cut
         _BK["t"] = time.time()
+
+
+def cache_status(n_expected: int | None = None, providers=None) -> dict:
+    """Read-only check of what is safely on Drive (+ local disk): answers per model,
+    broken lines, gaps between segments, and what has not reached Drive yet."""
+    import re as _re
+    seg = sorted(_seg_dir().glob("seg_*.jsonl")) if _seg_dir() and _seg_dir().exists() else []
+    drive_files = ([Path(DRIVE_CACHE)] if DRIVE_CACHE and Path(DRIVE_CACHE).exists() else []) + seg
+    keys, bad = {}, 0
+    for f in drive_files:
+        with open(f, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    d = json.loads(line)
+                    keys[d["key"]] = d["provider"]
+                except Exception:
+                    bad += 1
+    gaps = []
+    for a, b in zip(seg, seg[1:]):
+        ma = _re.search(r"_(\d{12})\.jsonl$", a.name)
+        mb = _re.search(r"_(\d{12})\.jsonl$", b.name)
+        if ma and mb:
+            end_a = int(ma.group(1)) + a.stat().st_size
+            if int(mb.group(1)) not in (end_a, 0):
+                gaps.append((a.name, b.name))
+    local = Path(LOCAL_CACHE).stat().st_size if Path(LOCAL_CACHE).exists() else 0
+    per = Counter(v for k, v in keys.items() if k.endswith("|" + PROMPT_VERSION))
+    print(f"[cache] Drive: {len(seg)} segments + {'1 main file' if DRIVE_CACHE and Path(DRIVE_CACHE).exists() else 'no main file'}"
+          f" | {len(keys):,} answers | {bad} broken lines | {len(gaps)} gaps")
+    for p in providers or PRIMARY:
+        k = per.get(p, 0)
+        print(f"  {p:<11} {k:,}" + (f"/{n_expected:,} ({k / n_expected:.1%})" if n_expected else ""))
+    print(f"  not yet on Drive: {max(local - _BK['offset'], 0) / 1e3:.0f} KB of this runtime's answers")
+    for g in gaps[:5]:
+        print("  gap:", *g)
+    return {"answers": len(keys), "per_model": dict(per), "broken": bad, "gaps": gaps, "segments": len(seg)}
+
+
+def compact_cache() -> None:
+    """Merge all Drive segments into the main cache file, then remove them.
+    Run only when NO screening is running (end of a session). Safe: the main file is
+    replaced atomically and segments are deleted only after it is written."""
+    seg = sorted(_seg_dir().glob("seg_*.jsonl")) if _seg_dir() and _seg_dir().exists() else []
+    if not seg:
+        print("[cache] nothing to compact")
+        return
+    cache = {}
+    for f in ([Path(DRIVE_CACHE)] if Path(DRIVE_CACHE).exists() else []) + seg:
+        with open(f, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    d = json.loads(line)
+                    cache[d["key"]] = d
+                except Exception:
+                    pass
+    tmp = Path(str(DRIVE_CACHE) + ".tmp")
+    with open(tmp, "w", encoding="utf-8") as fh:
+        for d in cache.values():
+            fh.write(json.dumps(d, ensure_ascii=False) + "\n")
+    tmp.replace(DRIVE_CACHE)
+    for f in seg:
+        f.unlink()
+    print(f"[cache] compacted {len(seg)} segments -> {len(cache):,} answers in {DRIVE_CACHE}")
 
 
 _WRITE = threading.Lock()
