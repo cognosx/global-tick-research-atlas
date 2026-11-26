@@ -87,7 +87,7 @@ NOTICE_RE = re.compile(
 # journal DOI, so they must not block a merge ("soft" DOIs).
 PREPRINT_DOI = ("10.1101/", "10.21203/", "10.20944/", "10.2139/ssrn", "10.31219/osf",
                 "10.48550/", "10.22541/", "10.32942/", "10.31234/", "10.26434/", "10.36227/",
-                "10.1590/scielopreprints", "10.12688/f1000research")
+                "10.1590/scielopreprints", "10.12688/f1000research", "10.17605/osf.io")
 REPOSITORY_DOI = ("10.5281/zenodo", "10.6084/m9.figshare", "10.17632/", "10.5061/dryad")
 SOFT_DOI = PREPRINT_DOI + REPOSITORY_DOI
 
