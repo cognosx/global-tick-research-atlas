@@ -27,3 +27,8 @@ Every threshold and scope choice, with date and reason. Newest first.
 - Only primary versions are screened; preprint partners inherit the decision.
 - Gate before the full run: pilot of 300 hand-coded records, consensus sensitivity ≥ 0.95, class κ ≥ 0.80.
 - Open decision for the pilot: acaricide residue / toxicity studies with ticks as the declared target are coded tick_control (tick_examined = false).
+
+## 2026-11-27 · Record kinds and recall audit
+- Full screening ran on 76,339 records (gtra-screen-v1) without the pilot gate; pilot and validation sheets are still uncoded, so all counts are provisional.
+- `record_kind` flags non-studies: ~1,200 Zenodo taxonomic treatments (mostly 2025, one record per taxon name), figures/supplements, notices, other repository items. Counts use `count_as_study`; 2025 included drops from 3,096 to 1,936.
+- Recall audit: 11,197 old-gold IDs are absent from the new harvest. Notebook 04 asks OpenAlex why (not_found / year_out / type_out / query_match_now / fulltext_only), screens them with the same prompt, and reports harvest recall for tick-focused papers.
