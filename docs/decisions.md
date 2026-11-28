@@ -32,3 +32,10 @@ Every threshold and scope choice, with date and reason. Newest first.
 - Full screening ran on 76,339 records (gtra-screen-v1) without the pilot gate; pilot and validation sheets are still uncoded, so all counts are provisional.
 - `record_kind` flags non-studies: ~1,200 Zenodo taxonomic treatments (mostly 2025, one record per taxon name), figures/supplements, notices, other repository items. Counts use `count_as_study`; 2025 included drops from 3,096 to 1,936.
 - Recall audit: 11,197 old-gold IDs are absent from the new harvest. Notebook 04 asks OpenAlex why (not_found / year_out / type_out / query_match_now / fulltext_only), screens them with the same prompt, and reports harvest recall for tick-focused papers.
+
+## 2026-11-28 · Validation result (gtra-screen-v1)
+- 598 blind, stratified records coded by coder 1; the 44 include/exclude disagreements adjudicated by coder 1 with both models' answers visible (to be confirmed by a blind second reviewer).
+- Weighted to the corpus, adjudicated reference, "uncertain" counted as exclude: sensitivity 0.977 [0.961–0.989], specificity 0.993, precision 0.991. After human review of "uncertain": sensitivity 0.989. Class accuracy 0.815.
+- Gate passed; prompt v1 stands. "Uncertain" records (968) go to human review; include/exclude splits keep luna's tie-break.
+- Scope clarification from adjudication: knowledge/attitude/practice surveys about ticks and tick protection are tick research (include); mite-only studies and pathogen reviews without ticks are not.
+- Labels: data/validation/gtra_v1_validation_labels.parquet (no abstracts).
