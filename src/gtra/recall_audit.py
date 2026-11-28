@@ -5,7 +5,10 @@ The old corpus was built with OpenAlex full-text search; the new one searches ti
 and keywords only. For every old-gold OpenAlex ID that is not in the new harvest, this module
 asks OpenAlex directly and assigns ONE reason (first match wins):
 
-  not_found        the ID no longer resolves (merged into another work or deleted)
+  in_harvest_new_id  OpenAlex merged the old ID into a work that IS in the harvest (same work,
+                   new ID) -> not a miss. Found on 2026-11-27: 2,183 of 2,241 "misses".
+  not_found        not returned under this ID: deleted, or merged (a merged ID comes back
+                   under its new ID, so it also appears as its own row with the new ID)
   year_out         publication_year outside the harvest window
   type_out         OpenAlex type outside the harvest types (e.g. book-chapter, dissertation)
   query_match_now  the work DOES match Block A in title/abstract/keywords today -> a real
@@ -23,7 +26,7 @@ import pandas as pd
 
 from .openalex_harvester import OpenAlexHarvester, short_id
 
-REASONS = ["not_found", "year_out", "type_out", "query_match_now", "fulltext_only"]
+REASONS = ["in_harvest_new_id", "not_found", "year_out", "type_out", "query_match_now", "fulltext_only"]
 
 
 def _batches(ids: list[str], n: int):
@@ -48,7 +51,8 @@ def fetch_by_ids(h: OpenAlexHarvester, ids, search: str | None = None,
 
 
 def audit(h: OpenAlexHarvester, ids, block_a: str, year_range: tuple[int, int], types: list[str],
-          search_field: str = "title_abstract_keywords") -> pd.DataFrame:
+          search_field: str = "title_abstract_keywords", harvested_ids=None,
+          harvested_dois=None) -> pd.DataFrame:
     ids = [short_id(i) for i in dict.fromkeys(ids)]
     print(f"[audit] fetching {len(ids):,} works")
     raw = fetch_by_ids(h, ids)
@@ -60,13 +64,20 @@ def audit(h: OpenAlexHarvester, ids, block_a: str, year_range: tuple[int, int], 
     if df.empty:
         df = pd.DataFrame(columns=["oa_id"])
     df["oa_id"] = df["oa_id"].map(short_id)
+    # OpenAlex answers an old (merged) ID with the surviving work; keep which old ID asked for it
     found = set(df["oa_id"])
+    hv_ids = {short_id(i) for i in (harvested_ids or [])}
+    norm = lambda d: str(d or "").lower().replace("https://doi.org/", "").strip()
+    hv_dois = {norm(d) for d in (harvested_dois or []) if norm(d)}
+    dois = df.get("oa_doi", pd.Series("", index=df.index)).map(norm)
     y0, y1 = year_range
     yr = pd.to_numeric(df.get("oa_year"), errors="coerce")
     typ = df.get("oa_type", pd.Series("", index=df.index)).astype(str).str.lower()
     reason = []
     for i in range(len(df)):
-        if not (y0 <= (yr.iloc[i] if pd.notna(yr.iloc[i]) else -1) <= y1):
+        if df["oa_id"].iloc[i] in hv_ids or (dois.iloc[i] and dois.iloc[i] in hv_dois):
+            reason.append("in_harvest_new_id")
+        elif not (y0 <= (yr.iloc[i] if pd.notna(yr.iloc[i]) else -1) <= y1):
             reason.append("year_out")
         elif typ.iloc[i] not in types:
             reason.append("type_out")
@@ -76,10 +87,13 @@ def audit(h: OpenAlexHarvester, ids, block_a: str, year_range: tuple[int, int], 
             reason.append("fulltext_only")
     df["audit_reason"] = reason
     # IDs that did not come back: merged or deleted (OpenAlex merges old IDs into a new one)
-    lost = [i for i in ids if i not in found]
+    lost = [i for i in ids if i not in found and i not in hv_ids]
     if lost:
         df = pd.concat([df, pd.DataFrame({"oa_id": lost, "audit_reason": "not_found"})], ignore_index=True)
     df["audit_reason"] = pd.Categorical(df["audit_reason"], categories=REASONS)
+    n_new = len(found - set(ids))
+    print(f"[audit] {n_new:,} works came back under a NEW id (old id merged); "
+          f"{len(lost):,} asked ids not returned as such")
     print(df["audit_reason"].value_counts().reindex(REASONS).to_string())
     return df
 
@@ -91,13 +105,16 @@ def harvest_recall(present_layers: pd.Series, missing: pd.DataFrame,
     present_layers: gtra_layer of old-gold records that ARE in the new corpus.
     missing: audit() output with gtra_layer added for the screened misses."""
     hit = present_layers.isin(layers).sum()
+    if "gtra_layer" in missing.columns:      # merged IDs found under their new ID are hits, not misses
+        hit += (missing["gtra_layer"].isin(layers) & missing["audit_reason"].eq("in_harvest_new_id")).sum()
+        missing = missing[missing["audit_reason"].ne("in_harvest_new_id")]
     m = missing[missing["gtra_layer"].isin(layers)] if "gtra_layer" in missing.columns else missing.iloc[0:0]
     by = m["audit_reason"].value_counts().reindex(REASONS, fill_value=0)
     in_scope_miss = by["query_match_now"] + by["fulltext_only"]
     rows = [
-        {"measure": "tick-focused old-gold papers found by the new harvest", "n": int(hit)},
+        {"measure": "tick-focused old-gold papers found by the new harvest (incl. merged IDs)", "n": int(hit)},
         {"measure": "tick-focused misses, all reasons", "n": int(by.sum())},
-        *[{"measure": f"  miss: {r}", "n": int(by[r])} for r in REASONS],
+        *[{"measure": f"  miss: {r}", "n": int(by[r])} for r in REASONS if r != "in_harvest_new_id"],
         {"measure": "recall, all misses", "n": round(hit / (hit + by.sum()), 4) if hit + by.sum() else None},
         {"measure": "recall within harvest scope (years and types)",
          "n": round(hit / (hit + in_scope_miss), 4) if hit + in_scope_miss else None},

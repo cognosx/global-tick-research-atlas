@@ -65,25 +65,26 @@ print(scr[(scr["record_kind"] == "repository_other") & scr["gtra_include"]][show
 # ## B · Recall audit against the old human-checked set
 
 gold = pd.read_parquet("/content/gtra/data/gold/gold_included_ids.parquet")["oa_id"].map(G.short_id)
-harvested = set(pd.read_parquet(PRE / "dedupe/dedupe_map.parquet", columns=["oa_id"])["oa_id"].map(G.short_id))
+dmap = pd.read_parquet(PRE / "dedupe/dedupe_map.parquet", columns=["oa_id", "oa_doi"])
+harvested = set(dmap["oa_id"].map(G.short_id)); harvested_dois = set(dmap["oa_doi"].dropna())
 missing_ids = sorted(set(gold) - harvested)
 print(f"old gold: {gold.nunique():,} | in new harvest: {len(set(gold) & harvested):,} | missing: {len(missing_ids):,}")
 
 # OpenAlex explains each miss (results saved; delete the file to redo)
-raw_path = AUDIT / "recall_audit_raw.parquet"
+raw_path = AUDIT / "recall_audit_raw_v2.parquet"        # v2: merged IDs recognised
 if raw_path.exists():
     aud = pd.read_parquet(raw_path)
 else:
     h = OpenAlexHarvester(api_key=os.environ.get("OPENALEX_API_KEY"))
     y0, y1 = map(int, MANIFEST["filters"]["publication_year"].split("-"))
     aud = RA.audit(h, missing_ids, MANIFEST["block_A"], (y0, y1), MANIFEST["filters"]["type"],
-                   MANIFEST["search_field"])
+                   MANIFEST["search_field"], harvested_ids=harvested, harvested_dois=harvested_dois)
     aud.astype({"audit_reason": str}).to_parquet(raw_path, index=False)
 aud["audit_reason"].value_counts()
 
 # Screen every miss that OpenAlex still returns, with the SAME prompt (cached, resumable)
 SAMPLE = None          # e.g. 2000 for a quicker estimate; None = all
-todo = aud[aud["audit_reason"] != "not_found"].copy()
+todo = aud[~aud["audit_reason"].isin(["not_found"])].copy()   # screening answers are cached: re-runs are free
 if SAMPLE and len(todo) > SAMPLE:
     todo = todo.sample(SAMPLE, random_state=11)
 prep = G.prepare(todo)
@@ -107,6 +108,7 @@ print(gap["audit_reason"].value_counts().to_string())
 gap[["audit_reason", "oa_year", "oa_type", "oa_title", "gtra_class", "gtra_evidence"]].sample(min(30, len(gap)), random_state=3)
 
 # **How to read it**
+# - `in_harvest_new_id`: same work, new OpenAlex ID, already in the corpus. Counted as found.
 # - `query_match_now` + core/review: the harvest **should** have found these. If there are many, re-run the harvest (index changed) or add them as a supplement.
 # - `fulltext_only` + core/review: tick-focused by their abstract, but the tick term was only in the full text according to OpenAlex (often non-English abstracts or missing abstracts). Decide: accept as a known limit, or add as a supplement flagged `source = recall_audit`.
 # - `year_out` / `type_out`: out of scope by design (pre-2000, book chapters…). Report, don't add.

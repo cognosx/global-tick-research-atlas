@@ -9,6 +9,7 @@ WORKS = {
     "W2": dict(publication_year=1995, type="article", title="Old tick paper", match=True),
     "W3": dict(publication_year=2015, type="book-chapter", title="Ticks chapter", match=True),
     "W4": dict(publication_year=2015, type="article", title="Lyme disease treatment", match=False),
+    "W5": dict(publication_year=2015, type="article", title="Ixodes merged record", match=True, new_id="W100"),
 }
 
 
@@ -23,14 +24,17 @@ class FakeH(OpenAlexHarvester):
             w = WORKS.get(i)
             if not w or ("search.title_abstract_keywords" in params and not w["match"]):
                 continue
-            res.append({"id": f"https://openalex.org/{i}", "title": w["title"], "display_name": w["title"],
+            res.append({"id": f"https://openalex.org/{w.get('new_id', i)}", "title": w["title"], "display_name": w["title"],
                         "publication_year": w["publication_year"], "type": w["type"]})
         return {"results": res}
 
 
 def test_audit_reasons():
-    df = audit(FakeH(), ["W1", "W2", "W3", "W4", "W9"], "tick", (2000, 2027),
-               ["article", "review", "letter", "preprint"]).set_index("oa_id")
+    df = audit(FakeH(), ["W1", "W2", "W3", "W4", "W5", "W9"], "tick", (2000, 2027),
+               ["article", "review", "letter", "preprint"], harvested_ids={"W100"}).set_index("oa_id")
+    assert df.loc["W100", "audit_reason"] == "in_harvest_new_id"
+    assert df.loc["W5", "audit_reason"] == "not_found"
+    df = df.drop(["W100", "W5"])
     assert df.loc["W1", "audit_reason"] == "query_match_now"
     assert df.loc["W2", "audit_reason"] == "year_out"
     assert df.loc["W3", "audit_reason"] == "type_out"
